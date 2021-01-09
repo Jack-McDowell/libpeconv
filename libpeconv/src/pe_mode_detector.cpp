@@ -2,6 +2,7 @@
 #include "peconv/util.h"
 #include "peconv/imports_loader.h"
 #include "peconv/relocate.h"
+#include "../utils/debug.h"
 
 #ifdef _DEBUG
 #include <iostream>
@@ -114,32 +115,22 @@ bool is_pe_mapped(IN const BYTE* pe_buffer, IN size_t pe_size)
 {
     size_t v_score = 0;
     if (peconv::has_valid_import_table((const PBYTE)pe_buffer, pe_size)) {
-#ifdef _DEBUG
-        std::cout << "Valid Import Table found" << std::endl;
-#endif
+        DEBUG_PRINT("Valid Import Table found" << std::endl);
         v_score++;
     }
     if (peconv::has_valid_relocation_table((const PBYTE)pe_buffer, pe_size)) {
-#ifdef _DEBUG
-        std::cout << "Valid Relocations Table found" << std::endl;
-#endif
+        DEBUG_PRINT("Valid Relocations Table found" << std::endl);
         v_score++;
     }
     if (is_hdr_virtual_align(pe_buffer, pe_size)) {
-#ifdef _DEBUG
-        std::cout << "Header virtual align OK" << std::endl;
-#endif
+        DEBUG_PRINT("Header virtual align OK" << std::endl);
         v_score++;
     }
     if (is_virtual_padding(pe_buffer, pe_size)) {
-#ifdef _DEBUG
-        std::cout << "Virtual Padding OK" << std::endl;
-#endif
+        DEBUG_PRINT("Virtual Padding OK" << std::endl);
         v_score++;
     }
-#ifdef _DEBUG
-    std::cout << "TOTAL v_score: " << std::dec << v_score << std::endl;
-#endif
+    DEBUG_PRINT("TOTAL v_score: " << std::dec << v_score << std::endl);
     if (v_score > 0) {
         return true;
     }
@@ -156,9 +147,7 @@ bool peconv::is_pe_raw(IN const BYTE* pe_buffer, IN size_t pe_size)
         return false;
     }
     if (sec_hdrs_erased(pe_buffer, pe_size, true)) {
-#ifdef _DEBUG
-        std::cout << "Raw alignment is erased\n";
-#endif
+        DEBUG_PRINT("Raw alignment is erased\n");
         // the raw alignment of the sections is erased
         return false;
     }

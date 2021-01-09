@@ -3,6 +3,7 @@
 
 #ifdef _DEBUG
 #include <iostream>
+#include "../utils/debug.h"
 #endif
 
 bool parse_resource_dir(BYTE* modulePtr, const size_t moduleSize,
@@ -18,20 +19,14 @@ bool parse_resource_entry(BYTE* modulePtr, const size_t moduleSize,
     peconv::t_on_res_entry_found on_entry)
 {
     if (!entry->DataIsDirectory) {
-#ifdef _DEBUG
-        std::cout << "Entry is NOT a directory\n";
-#endif
+        DEBUG_PRINT("Entry is NOT a directory\n")
         DWORD offset = entry->OffsetToData;
-#ifdef _DEBUG
-        std::cout << "Offset: " << offset << std::endl;
-#endif
+        DEBUG_PRINT("Offset: " << offset << std::endl);
         IMAGE_RESOURCE_DATA_ENTRY *data_entry = (IMAGE_RESOURCE_DATA_ENTRY*)(offset + (ULONGLONG)upper_dir);
         if (!peconv::validate_ptr(modulePtr, moduleSize, data_entry, sizeof(IMAGE_RESOURCE_DATA_ENTRY))) {
             return false;
         }
-#ifdef _DEBUG
-        std::cout << "Data Offset: " << data_entry->OffsetToData << " : " << data_entry->Size << std::endl;
-#endif
+        DEBUG_PRINT("Data Offset: " << data_entry->OffsetToData << " : " << data_entry->Size << std::endl);
         BYTE* data_ptr = (BYTE*)((ULONGLONG)modulePtr + data_entry->OffsetToData);
         if (!peconv::validate_ptr(modulePtr, moduleSize, data_ptr, data_entry->Size)) {
             return false;
@@ -39,14 +34,10 @@ bool parse_resource_entry(BYTE* modulePtr, const size_t moduleSize,
         on_entry(modulePtr, root_dir, data_entry);
         return true;
     }
-#ifdef _DEBUG
-    std::cout << "Entry is a directory\n";
-#endif
+    DEBUG_PRINT("Entry is a directory\n");
     //else: it is a next level directory
     DWORD offset = entry->OffsetToDirectory;
-#ifdef _DEBUG
-    std::cout << "Offset: " << offset << std::endl;
-#endif
+    DEBUG_PRINT("Offset: " << offset << std::endl);
     IMAGE_RESOURCE_DIRECTORY *next_dir = (IMAGE_RESOURCE_DIRECTORY*)(offset + (ULONGLONG)upper_dir);
     if (!peconv::validate_ptr(modulePtr, moduleSize, next_dir, sizeof(IMAGE_RESOURCE_DIRECTORY))) {
         return false;
@@ -64,9 +55,7 @@ bool parse_resource_dir(BYTE* modulePtr, const size_t moduleSize,
     IMAGE_RESOURCE_DIRECTORY_ENTRY* first_entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY*)((ULONGLONG)&curr_dir->NumberOfIdEntries + sizeof(WORD));
     for (size_t i = 0; i < total_entries; i++) {
         IMAGE_RESOURCE_DIRECTORY_ENTRY* entry = &first_entry[i];
-#ifdef _DEBUG
-        std::cout << "Entry:" << std::hex << i << " ; " << "Id: " << entry->Id << " ; dataOffset:" << entry->OffsetToData << "\n";
-#endif
+        DEBUG_PRINT("Entry:" << std::hex << i << " ; " << "Id: " << entry->Id << " ; dataOffset:" << entry->OffsetToData << "\n");
         if (root_dir == nullptr) {
             root_dir = entry;
         }

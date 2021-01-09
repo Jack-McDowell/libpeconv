@@ -4,6 +4,7 @@ using namespace peconv;
 
 #ifdef _DEBUG
 #include <iostream>
+#include "../utils/debug.h"
 #endif
 
 BYTE* peconv::get_nt_hdrs(IN const BYTE *pe_buffer, IN OPTIONAL size_t buffer_size)
@@ -595,9 +596,7 @@ bool peconv::is_valid_sectons_alignment(IN const BYTE* payload, IN const SIZE_T 
 
     const DWORD my_align = peconv::get_sec_alignment(payload, is_raw);
     if (my_align == 0) {
-#ifdef _DEBUG
-        std::cout << "Section alignment cannot be 0\n";
-#endif
+        DEBUG_PRINT("Section alignment cannot be 0\n");
         return false;
     }
     const size_t sections_count = peconv::get_sections_count(payload, payload_size);
@@ -623,9 +622,7 @@ bool peconv::is_valid_sectons_alignment(IN const BYTE* payload, IN const SIZE_T 
 
         //check only if raw_align is non-zero
         if (my_align && next_sec_addr % my_align != 0) {
-#ifdef _DEBUG
-            std::cout << "Section is misaligned\n";
-#endif
+            DEBUG_PRINT("Section is misaligned\n");
             return false; //misaligned
         }
     }

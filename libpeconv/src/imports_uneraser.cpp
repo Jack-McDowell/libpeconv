@@ -1,6 +1,7 @@
 #include "peconv/imports_uneraser.h"
 
 #include <iostream>
+#include "../utils/debug.h"
 
 using namespace peconv;
 
@@ -21,9 +22,7 @@ LPVOID search_name(std::string name, const char* modulePtr, size_t moduleSize)
 
 bool ImportsUneraser::writeFoundDllName(IMAGE_IMPORT_DESCRIPTOR* lib_desc, const std::string &found_name)
 {
-#ifdef _DEBUG
-    std::cout << "Found name:" << found_name << std::endl;
-#endif
+    DEBUG_PRINT("Found name:" << found_name << std::endl);
     LPSTR name_ptr = (LPSTR)((ULONGLONG) modulePtr + lib_desc->Name);
     size_t full_name_len = found_name.length() + 1; // with terminating zero
     if (!validate_ptr(modulePtr, moduleSize, name_ptr, full_name_len)) {
@@ -107,24 +106,20 @@ bool ImportsUneraser::findNameInBinaryAndFill(IMAGE_IMPORT_DESCRIPTOR* lib_desc,
 #ifdef _DEBUG
         //if it is not the first name from the list, inform about it:
         if (funcname_itr != addr_to_func[searchedAddr].begin()) {
-            std::cout << ">[*][" << std::hex << searchedAddr << "] " << found_func.toString() << std::endl;
+            DEBUG_PRINT(">[*][" << std::hex << searchedAddr << "] " << found_func.toString() << std::endl);
         }
-        std::cout <<"[+] Found the name at: " << std::hex << name_offset << std::endl;
+        DEBUG_PRINT("[+] Found the name at: " << std::hex << name_offset << std::endl);
 #endif
         PIMAGE_IMPORT_BY_NAME imp_field = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>(name_offset - sizeof(WORD)); // substract the size of Hint
         //TODO: validate more...
         memcpy(thunk_ptr, &imp_field, sizeof(FIELD_T));
-#ifdef _DEBUG
-        std::cout << "[+] Wrote found to offset: " << std::hex << call_via_ptr << std::endl;
-#endif
+        DEBUG_PRINT("[+] Wrote found to offset: " << std::hex << call_via_ptr << std::endl);
         is_name_saved = true;
         break;
     }
     //name not found or could not be saved - fill the ordinal instead:
     if (!is_name_saved && lastOrdinal != 0) {
-#ifdef _DEBUG
-        std::cout << "[+] Filling ordinal: " << lastOrdinal << std::endl;
-#endif
+        DEBUG_PRINT("[+] Filling ordinal: " << lastOrdinal << std::endl);
         FIELD_T ord_thunk = lastOrdinal | ordinal_flag;
         memcpy(thunk_ptr, &ord_thunk, sizeof(FIELD_T)); 
         is_name_saved = true;
@@ -139,9 +134,7 @@ bool ImportsUneraser::writeFoundFunction(IMAGE_THUNK_DATA_T* desc, const FIELD_T
         FIELD_T ordinal = foundFunc.funcOrdinal | ordinal_flag;
         FIELD_T* by_ord = (FIELD_T*) desc;
         *by_ord = ordinal;
-#ifdef _DEBUG
-        std::cout << "[+] Saved ordinal" << std::endl;
-#endif
+        DEBUG_PRINT("[+] Saved ordinal" << std::endl);
         return true;
     }
 
@@ -154,9 +147,7 @@ bool ImportsUneraser::writeFoundFunction(IMAGE_THUNK_DATA_T* desc, const FIELD_T
     if (is_nameptr_valid) {
         by_name->Hint = MASK_TO_WORD(foundFunc.funcOrdinal);
         memcpy(func_name_ptr, found_name.c_str(), found_name.length() + 1); // with the ending '\0'
-#ifdef _DEBUG
-        std::cout << "[+] Saved name" << std::endl;
-#endif
+        DEBUG_PRINT("[+] Saved name" << std::endl);
         return true;
     }
     return false;
@@ -212,9 +203,7 @@ bool ImportsUneraser::fillImportNames(
         std::set<ExportedFunc>::const_iterator funcname_itr = found_itr->second.begin();
         const peconv::ExportedFunc &foundFunc = *funcname_itr;
 
-#ifdef _DEBUG
-        std::cout << "[*][" << std::hex << searchedAddr << "] " << funcname_itr->toString() << std::endl;
-#endif
+        DEBUG_PRINT("[*][" << std::hex << searchedAddr << "] " << funcname_itr->toString() << std::endl);
         bool is_name_saved = writeFoundFunction<FIELD_T, IMAGE_THUNK_DATA_T>(desc, ordinal_flag, *funcname_itr);
         if (!is_name_saved) {
             is_name_saved = findNameInBinaryAndFill<FIELD_T>(lib_desc, call_via_ptr, thunk_ptr, ordinal_flag, addr_to_func);
@@ -236,7 +225,7 @@ bool ImportsUneraser::uneraseDllImports(IN OUT IMAGE_IMPORT_DESCRIPTOR* lib_desc
         is_filled = fillImportNames<ULONGLONG, IMAGE_THUNK_DATA64>(lib_desc, IMAGE_ORDINAL_FLAG64, dllCoverage.addrToFunc, notCovered);
     }
     if (!is_filled) {
-        std::cerr << "[-] Could not fill some import names!" << std::endl;
+        DEBUG_PRINT("[-] Could not fill some import names!" << std::endl);
         return false;
     }
     return is_filled;

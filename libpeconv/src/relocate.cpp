@@ -2,6 +2,7 @@
 
 #include "peconv/pe_hdrs_helper.h"
 #include <stdio.h>
+#include "../utils/debug.h"
 #include <iostream>
 
 using namespace peconv;
@@ -75,14 +76,14 @@ bool process_reloc_block(BASE_RELOCATION_ENTRY *block, SIZE_T entriesNum, DWORD 
         }
         if (type != RELOC_32BIT_FIELD && type != RELOC_64BIT_FIELD) {
             if (callback) { //print debug messages only if the callback function was set
-                printf("[-] Not supported relocations format at %d: %d\n", (int)i, (int)type);
+                DEBUG_PRINT("[-] Not supported relocations format at %d: %d\n", (int)i, (int)type);
             }
             return false;
         }
         DWORD reloc_field = page + offset;
         if (reloc_field >= moduleSize) {
             if (callback) { //print debug messages only if the callback function was set
-                printf("[-] Malformed field: %lx\n", reloc_field);
+                DEBUG_PRINT("[-] Malformed field: %lx\n", reloc_field);
             }
             return false;
         }
@@ -102,9 +103,7 @@ bool peconv::process_relocation_table(IN PVOID modulePtr, IN SIZE_T moduleSize, 
 {
     IMAGE_DATA_DIRECTORY* relocDir = peconv::get_directory_entry((const BYTE*)modulePtr, IMAGE_DIRECTORY_ENTRY_BASERELOC);
     if (relocDir == NULL) {
-#ifdef _DEBUG
-        std::cout << "[!] WARNING: no relocation table found!\n";
-#endif
+        DEBUG_PRINT("[!] WARNING: no relocation table found!\n");
         return false;
     }
     if (!validate_ptr(modulePtr, moduleSize, relocDir, sizeof(IMAGE_DATA_DIRECTORY))) {
@@ -122,9 +121,7 @@ bool peconv::process_relocation_table(IN PVOID modulePtr, IN SIZE_T moduleSize, 
     while (parsedSize < maxSize) {
         reloc = (IMAGE_BASE_RELOCATION*)(relocAddr + parsedSize + (ULONG_PTR)modulePtr);
         if (!validate_ptr(modulePtr, moduleSize, reloc, sizeof(IMAGE_BASE_RELOCATION))) {
-#ifdef _DEBUG
-            std::cerr << "[-] Invalid address of relocations\n";
-#endif
+            DEBUG_PRINT("[-] Invalid address of relocations\n");
             return false;
         }
         if (reloc->SizeOfBlock == 0) {
@@ -167,22 +164,16 @@ bool peconv::relocate_module(IN BYTE* modulePtr, IN SIZE_T moduleSize, IN ULONGL
     if (oldBase == 0) {
         oldBase = get_image_base(modulePtr);
     }
-#ifdef _DEBUG
-    printf("New Base: %llx\n", newBase);
-    printf("Old Base: %llx\n", oldBase);
-#endif
+    DEBUG_PRINT("New Base: %llx\n", newBase);
+    DEBUG_PRINT("Old Base: %llx\n", oldBase);
     if (newBase == oldBase) {
-#ifdef _DEBUG
-        printf("Nothing to relocate! oldBase is the same as the newBase!\n");
-#endif
+        DEBUG_PRINT("Nothing to relocate! oldBase is the same as the newBase!\n");
         return true; //nothing to relocate
     }
     if (apply_relocations(modulePtr, moduleSize, newBase, oldBase)) {
         return true;
     }
-#ifdef _DEBUG
-    printf("Could not relocate the module!\n");
-#endif
+    DEBUG_PRINT("Could not relocate the module!\n");
     return false;
 }
 

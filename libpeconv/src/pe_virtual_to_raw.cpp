@@ -3,6 +3,7 @@
 #include "peconv/util.h"
 #include "peconv/pe_hdrs_helper.h"
 #include "peconv/relocate.h"
+#include "../utils/debug.h"
 
 #include <iostream>
 
@@ -36,9 +37,7 @@ bool sections_virtual_to_raw(BYTE* payload, SIZE_T payload_size, OUT BYTE* destA
     }
 
     //copy all the sections, one by one:
-#ifdef _DEBUG
-    std::cout << "Coping sections:" << std::endl;
-#endif
+    DEBUG_PRINT("Coping sections:" << std::endl);
     DWORD first_raw = 0;
     SIZE_T raw_end = hdrsSize;
     for (WORD i = 0; i < fileHdr->NumberOfSections; i++) {
@@ -67,9 +66,7 @@ bool sections_virtual_to_raw(BYTE* payload, SIZE_T payload_size, OUT BYTE* destA
             std::cerr << "[-] Raw section size is out ouf bounds: " << std::hex << sec_size << std::endl;
             return false;
         }
-#ifdef _DEBUG
-        std::cout << "[+] " << next_sec->Name  << " to: "  << std::hex <<  section_raw_ptr << std::endl;
-#endif
+        DEBUG_PRINT("[+] " << next_sec->Name  << " to: "  << std::hex <<  section_raw_ptr << std::endl);
         //validate source:
         if (!peconv::validate_ptr(payload, payload_size, section_mapped, sec_size)) {
             std::cerr << "[-] Section " << i << ":  out ouf bounds, skipping... " << std::endl;
@@ -93,9 +90,7 @@ bool sections_virtual_to_raw(BYTE* payload, SIZE_T payload_size, OUT BYTE* destA
     //copy payload's headers:
     if (hdrsSize == 0) {
         hdrsSize = first_raw;
-#ifdef _DEBUG
-        std::cout << "hdrsSize not filled, using calculated size: " << std::hex << hdrsSize << "\n";
-#endif
+        DEBUG_PRINT("hdrsSize not filled, using calculated size: " << std::hex << hdrsSize << "\n");
     }
     if (!validate_ptr(payload, payload_size, payload, hdrsSize)) {
         return false;
@@ -134,9 +129,7 @@ BYTE* peconv::pe_virtual_to_raw(
             std::cerr << "[-] Failed relocating the module!" << std::endl;
             isOk = false;
         } else {
-#ifdef _DEBUG
-            std::cerr << "[!] WARNING: The module could not be relocated, so the ImageBase has been changed instead!" << std::endl;
-#endif
+            DEBUG_PRINT("[!] WARNING: The module could not be relocated, so the ImageBase has been changed instead!" << std::endl);
         }
     }
     SIZE_T raw_size = 0;
@@ -182,9 +175,7 @@ BYTE* peconv::pe_realign_raw_to_virtual(
             std::cerr << "[-] Failed relocating the module!" << std::endl;
             isOk = false;
         } else {
-#ifdef _DEBUG
-            std::cerr << "[!] WARNING: The module could not be relocated, so the ImageBase has been changed instead!" << std::endl;
-#endif
+            DEBUG_PRINT("[!] WARNING: The module could not be relocated, so the ImageBase has been changed instead!" << std::endl);
         }
     }
     //---

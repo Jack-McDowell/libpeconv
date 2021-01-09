@@ -1,6 +1,7 @@
 #include "peconv/caves.h"
 #include "peconv/pe_hdrs_helper.h"
 #include "peconv/util.h"
+#include "../utils/debug.h"
 
 using namespace peconv;
 
@@ -22,23 +23,17 @@ PBYTE peconv::find_ending_cave(BYTE*modulePtr, size_t moduleSize, const DWORD mi
     DWORD virtual_size = (DWORD)moduleSize - section_hdr->VirtualAddress;
 
     if (raw_size >= virtual_size) {
-#ifdef _DEBUG
-        std::cout << "Last section's raw_size: " << std::hex << raw_size << " >= virtual_size: " << virtual_size << std::endl;
-#endif
+        DEBUG_PRINT("Last section's raw_size: " << std::hex << raw_size << " >= virtual_size: " << virtual_size << std::endl);
         return nullptr;
     }
     DWORD cave_size = virtual_size - raw_size;
     if (cave_size < minimal_size) {
-#ifdef _DEBUG
-        std::cout << "Cave is too small" << std::endl;
-#endif
+        DEBUG_PRINT("Cave is too small" << std::endl);
         return nullptr;
     }
     PBYTE cave_ptr = modulePtr + section_hdr->VirtualAddress + section_hdr->SizeOfRawData;
     if (!validate_ptr(modulePtr, moduleSize, cave_ptr, minimal_size)) {
-#ifdef _DEBUG
-        std::cout << "Invalid cave pointer" << std::endl;
-#endif
+        DEBUG_PRINT("Invalid cave pointer" << std::endl);
         return nullptr;
     }
     section_hdr->SizeOfRawData += minimal_size; //book this cave
@@ -63,31 +58,23 @@ PBYTE peconv::find_alignment_cave(BYTE* modulePtr, size_t moduleSize, const DWOR
         DWORD new_size = div * alignment;
         DWORD cave_size = new_size - section_hdr->SizeOfRawData;
         if (cave_size < minimal_size) {
-#ifdef __DEBUG
-            std::cout << "Cave is too small" << std::endl;
-#endif
+            DEBUG_PRINT("Cave is too small" << std::endl);
             continue;
         }
         DWORD sec_start = section_hdr->PointerToRawData;
         if (sec_start == 0) continue;
 
         DWORD sec_end = sec_start + section_hdr->SizeOfRawData;
-#ifdef _DEBUG
-        std::cout << "section: " << std::hex << sec_start << " : " << sec_end << std::endl;
-#endif
+        DEBUG_PRINT("section: " << std::hex << sec_start << " : " << sec_end << std::endl);
         PBYTE cave_ptr = modulePtr + sec_end;
         if (!validate_ptr(modulePtr, moduleSize, cave_ptr, minimal_size)) {
-#ifdef _DEBUG
-            std::cout << "Invalid cave pointer" << std::endl;
-#endif
+            DEBUG_PRINT("Invalid cave pointer" << std::endl);
             continue;
         }
         section_hdr->SizeOfRawData += minimal_size; //book this cave
         return cave_ptr;
     }
-#ifdef _DEBUG
-    std::cout << "Cave not found" << std::endl;
-#endif
+    DEBUG_PRINT("Cave not found" << std::endl);
     return nullptr;
 }
 
@@ -106,16 +93,12 @@ PBYTE peconv::find_padding_cave(BYTE* modulePtr, size_t moduleSize, const size_t
         if (sec_start == 0) continue;
 
         DWORD sec_end = sec_start + section_hdr->SizeOfRawData;
-#ifdef _DEBUG
-        std::cout << "section: " << std::hex << sec_start << " : " << sec_end << std::endl;
-#endif
+        DEBUG_PRINT("section: " << std::hex << sec_start << " : " << sec_end << std::endl)
         //offset from the end of the section:
         size_t cave_offset = section_hdr->SizeOfRawData - minimal_size;
         PBYTE cave_ptr = modulePtr + sec_start + cave_offset;
         if (!validate_ptr(modulePtr, moduleSize, cave_ptr, minimal_size)) {
-#ifdef _DEBUG
-            std::cout << "Invalid cave pointer" << std::endl;
-#endif
+            DEBUG_PRINT("Invalid cave pointer" << std::endl);
             continue;
         }
         bool found = false;
@@ -132,8 +115,6 @@ PBYTE peconv::find_padding_cave(BYTE* modulePtr, size_t moduleSize, const size_t
             return cave_ptr;
         }
     }
-#ifdef _DEBUG
-    std::cout << "Cave not found" << std::endl;
-#endif
+    DEBUG_PRINT("Cave not found" << std::endl);
     return nullptr;
 }

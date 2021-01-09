@@ -1,4 +1,5 @@
 #include "peconv/imports_loader.h"
+#include "../utils/debug.h"
 
 #include <iostream>
 
@@ -49,24 +50,18 @@ protected:
         FARPROC hProc = nullptr;
         if (is_by_ord) {
             T_FIELD raw_ordinal = desc->u1.Ordinal & (~ordinal_flag);
-#ifdef _DEBUG
-            std::cout << "raw ordinal: " << std::hex << raw_ordinal << std::endl;
-#endif
+            DEBUG_PRINT("raw ordinal: " << std::hex << raw_ordinal << std::endl);
             hProc = funcResolver->resolve_func(lib_name, MAKEINTRESOURCEA(raw_ordinal));
 
         }
         else {
             PIMAGE_IMPORT_BY_NAME by_name = (PIMAGE_IMPORT_BY_NAME)((ULONGLONG)modulePtr + desc->u1.AddressOfData);
             LPSTR func_name = reinterpret_cast<LPSTR>(by_name->Name);
-#ifdef _DEBUG
-            std::cout << "name: " << func_name << std::endl;
-#endif
+            DEBUG_PRINT("name: " << func_name << std::endl);
             hProc = this->funcResolver->resolve_func(lib_name, func_name);
         }
         if (!hProc) {
-#ifdef _DEBUG
-            std::cerr << "Could not resolve the function!" << std::endl;
-#endif
+            DEBUG_PRINT("Could not resolve the function!" << std::endl);
             return false;
         }
         (*call_via) = reinterpret_cast<T_FIELD>(hProc);
@@ -125,9 +120,7 @@ bool process_imp_functions_tpl(BYTE* modulePtr, size_t module_size, LPSTR lib_na
 bool process_dlls(BYTE* modulePtr, size_t module_size, IMAGE_IMPORT_DESCRIPTOR *first_desc, IN ImportThunksCallback *callback)
 {
     bool isAllFilled = true;
-#ifdef _DEBUG
-    std::cout << "---IMP---" << std::endl;
-#endif
+    DEBUG_PRINT("---IMP---" << std::endl);
     const bool is64 = is64bit((BYTE*)modulePtr);
     IMAGE_IMPORT_DESCRIPTOR* lib_desc = nullptr;
 
@@ -149,9 +142,7 @@ bool process_dlls(BYTE* modulePtr, size_t module_size, IMAGE_IMPORT_DESCRIPTOR *
         if (thunk_addr == NULL) {
             thunk_addr = lib_desc->FirstThunk;
         }
-#ifdef _DEBUG
-        std::cout << "Imported Lib: " << std::hex << lib_desc->FirstThunk << " : " << std::hex << lib_desc->OriginalFirstThunk << " : " << lib_desc->Name << std::endl;
-#endif
+        DEBUG_PRINT("Imported Lib: " << std::hex << lib_desc->FirstThunk << " : " << std::hex << lib_desc->OriginalFirstThunk << " : " << lib_desc->Name << std::endl);
         size_t all_solved = false;
         if (is64) {
             all_solved = process_imp_functions_tpl<ULONGLONG, IMAGE_THUNK_DATA64>(modulePtr, module_size, lib_name, call_via, thunk_addr, callback);
@@ -163,9 +154,7 @@ bool process_dlls(BYTE* modulePtr, size_t module_size, IMAGE_IMPORT_DESCRIPTOR *
             isAllFilled = false;
         }
     }
-#ifdef _DEBUG
-    printf("---------\n");
-#endif
+    DEBUG_PRINT("---------\n");
     return isAllFilled;
 }
 
@@ -199,7 +188,7 @@ bool peconv::load_imports(BYTE* modulePtr, t_function_resolver* func_resolver)
     is_loader64 = true;
 #endif
     if (is64 != is_loader64) {
-        std::cerr << "[ERROR] Loader/Payload bitness mismatch.\n";
+        DEBUG_PRINT("[ERROR] Loader/Payload bitness mismatch.\n");
         return false;
     }
 

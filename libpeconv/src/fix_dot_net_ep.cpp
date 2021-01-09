@@ -1,5 +1,6 @@
 #include "fix_dot_net_ep.h"
 #include <peconv.h>
+#include "../utils/debug.h"
 
 #include <string>
 #include <map>
@@ -29,16 +30,12 @@ protected:
     bool processThunks_tpl(LPSTR lib_name, T_IMAGE_THUNK_DATA* desc, T_FIELD* call_via, T_FIELD ordinal_flag)
     {
         DWORD call_via_rva = static_cast<DWORD>((ULONG_PTR)call_via - (ULONG_PTR)this->modulePtr);
-#ifdef _DEBUG
-        std::cout << "via RVA: " << std::hex << call_via_rva << " : ";
-#endif
+        DEBUG_PRINT("via RVA: " << std::hex << call_via_rva << " : ");
         bool is_by_ord = (desc->u1.Ordinal & ordinal_flag) != 0;
         if (!is_by_ord) {
             PIMAGE_IMPORT_BY_NAME by_name = (PIMAGE_IMPORT_BY_NAME)((ULONGLONG)modulePtr + desc->u1.AddressOfData);
             LPSTR func_name = reinterpret_cast<LPSTR>(by_name->Name);
-#ifdef _DEBUG
-            std::cout << "name: " << func_name << std::endl;
-#endif
+            DEBUG_PRINT("name: " << func_name << std::endl);
             nameToAddr[func_name] = call_via_rva;
         }
         return true;
@@ -83,13 +80,11 @@ BYTE* search_jump(BYTE *buf, size_t buf_size, const DWORD cor_exe_main_thunk, co
             DWORD* addr = (DWORD*)(&buf[i + jmp_size]);
             DWORD rva = static_cast<DWORD>((*addr) - img_base);
             if (rva == cor_exe_main_thunk) {
-#ifdef _DEBUG
-                std::cout << "Found call to _CorExeMain\n";
-#endif
+                DEBUG_PRINT("Found call to _CorExeMain\n");
                 return buf + i;
             }
             else {
-                std::cout << "[!] Mismatch: " << std::hex << rva << " vs _CorExeMain: " << cor_exe_main_thunk << std::endl;
+                DEBUG_PRINT("[!] Mismatch: " << std::hex << rva << " vs _CorExeMain: " << cor_exe_main_thunk << std::endl);
             }
         }
     }
@@ -107,7 +102,7 @@ bool fix_dot_net_ep(BYTE *pe_buffer, size_t pe_buffer_size)
     }
 
     DWORD ep_rva = peconv::get_entry_point_rva(pe_buffer);
-    std::cout << "[*] This is a .NET payload and may require Enty Point corection. Current EP: " << std::hex << ep_rva << "\n";
+    DEBUG_PRINT("[*] This is a .NET payload and may require Enty Point corection. Current EP: " << std::hex << ep_rva << "\n");
 
     PIMAGE_SECTION_HEADER sec_hdr = peconv::get_section_hdr(pe_buffer, pe_buffer_size, 0);
     if (!sec_hdr) return false;
@@ -126,7 +121,7 @@ bool fix_dot_net_ep(BYTE *pe_buffer, size_t pe_buffer_size)
 
     size_t offset = jump_ptr - pe_buffer;
     peconv::update_entry_point_rva(pe_buffer, static_cast<DWORD>(offset));
-    std::cout << "[*] Found possible Entry Point: " << std::hex << offset << std::endl;
+    DEBUG_PRINT("[*] Found possible Entry Point: " << std::hex << offset << std::endl);
     return true;
 }
 

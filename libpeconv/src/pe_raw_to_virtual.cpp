@@ -4,6 +4,7 @@
 #include "peconv/pe_hdrs_helper.h"
 
 #include <iostream>
+#include "../utils/debug.h"
 
 using namespace peconv;
 
@@ -84,9 +85,7 @@ bool sections_raw_to_virtual(IN const BYTE* payload, IN SIZE_T payloadSize, OUT 
     //copy payload's headers:
     if (hdrsSize == 0) {
         hdrsSize= first_raw;
-#ifdef _DEBUG
-        std::cout << "hdrsSize not filled, using calculated size: " << std::hex << hdrsSize << "\n";
-#endif
+        DEBUG_PRINT("hdrsSize not filled, using calculated size: " << std::hex << hdrsSize << "\n")
     }
     if (!validate_ptr((const LPVOID)payload, destBufferSize, (const LPVOID)payload, hdrsSize)) {
         return false;

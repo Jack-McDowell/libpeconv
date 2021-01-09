@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "../utils/debug.h"
 
 using namespace peconv;
 
@@ -57,9 +58,7 @@ size_t ExportsMapper::make_ord_lookup_tables(
     for (DWORD i = 0; i < functCount; i++) {
         DWORD* recordRVA = (DWORD*)(funcsListRVA + (BYTE*) modulePtr + i * sizeof(DWORD));
         if (*recordRVA == 0) {
-#ifdef _DEBUG
-            std::cout << ">>> Skipping 0 function address at RVA:" << std::hex << (BYTE*)recordRVA - (BYTE*)modulePtr<< "(ord)\n";
-#endif
+            DEBUG_PRINT(">>> Skipping 0 function address at RVA:" << std::hex << (BYTE*) recordRVA - (BYTE*) modulePtr << "(ord)\n");
             //skip if the function RVA is 0 (empty export)
             continue;
         }
@@ -190,9 +189,7 @@ ExportsMapper::ADD_FUNC_RES ExportsMapper::add_function_to_lookup(HMODULE module
     ULONGLONG callVa = callRVA + moduleBase;
     if (!peconv::validate_ptr((BYTE*)moduleBase, moduleSize, (BYTE*)callVa, sizeof(ULONGLONG))) {
         // this may happen when the function was forwarded and it is already filled
-#ifdef _DEBUG
-        std::cout << "Validation failed:  " << currFunc.toString() << "\n";
-#endif
+        DEBUG_PRINT("Validation failed:  " << currFunc.toString() << "\n")
         return ExportsMapper::RES_INVALID;
     }
     //not forwarded, simple case:
@@ -232,9 +229,7 @@ size_t ExportsMapper::add_to_lookup(std::string moduleName, HMODULE modulePtr, U
         WORD* nameIndex = (WORD*)(namesOrdsListRVA + (BYTE*) modulePtr + i * sizeof(WORD));
         DWORD* funcRVA = (DWORD*)(funcsListRVA + (BYTE*) modulePtr + (*nameIndex) * sizeof(DWORD));
         if (*funcRVA == 0) {
-#ifdef _DEBUG
-            std::cout << ">>> Skipping 0 function address at RVA:" << std::hex << (BYTE*)funcRVA - (BYTE*)modulePtr << "(name)\n";
-#endif
+            DEBUG_PRINT(">>> Skipping 0 function address at RVA:" << std::hex << (BYTE*)funcRVA - (BYTE*)modulePtr << "(name)\n");
             //skip if the function RVA is 0 (empty export)
             continue;
         }
@@ -262,8 +257,6 @@ size_t ExportsMapper::add_to_lookup(std::string moduleName, HMODULE modulePtr, U
         if (res == ExportsMapper::RES_FORWARDED) forwarded_ctr++;
         if (res == ExportsMapper::RES_MAPPED) mapped_ctr++;
     }
-#ifdef _DEBUG
-    std::cout << "Finished exports parsing, mapped: "<< mapped_ctr << " forwarded: " << forwarded_ctr  << std::endl;
-#endif
+    DEBUG_PRINT("Finished exports parsing, mapped: "<< mapped_ctr << " forwarded: " << forwarded_ctr  << std::endl);
     return mapped_ctr;
 }

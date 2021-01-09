@@ -1,6 +1,7 @@
 #include "peconv/hooks.h"
 #include "peconv.h"
 #include "peconv/peb_lookup.h"
+#include "../utils/debug.h"
 
 using namespace peconv;
 
@@ -85,9 +86,7 @@ FARPROC peconv::hooking_func_resolver::resolve_func(LPSTR lib_name, LPSTR func_n
         std::map<std::string, FARPROC>::iterator itr = hooks_map.find(func_name);
         if (itr != hooks_map.end()) {
             FARPROC hook = itr->second;
-#ifdef _DEBUG
-            std::cout << ">>>>>>Replacing: " << func_name << " by: " << hook << std::endl;
-#endif
+            DEBUG_PRINT(">>>>>>Replacing: " << func_name << " by: " << hook << std::endl);
             return hook;
         }
     }
@@ -207,9 +206,7 @@ bool peconv::replace_target(BYTE *patch_ptr, ULONGLONG dest_addr)
     if (patch_ptr[0] == OP_JMP || patch_ptr[0] == OP_CALL_DWORD) {
         ULONGLONG delta = get_jmp_delta(ULONGLONG(patch_ptr), 5, dest_addr);
         if (!is_valid_delta(delta)) {
-#ifdef _DEBUG
-            std::cout << "Cannot replace the target: too big delta: " << std::hex << delta << std::endl;
-#endif
+            DEBUG_PRINT("Cannot replace the target: too big delta: " << std::hex << delta << std::endl);
             //too big delta, cannot be saved in a DWORD
             return false;
         }

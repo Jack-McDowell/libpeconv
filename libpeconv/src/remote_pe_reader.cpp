@@ -4,6 +4,7 @@
 
 #include "peconv/util.h"
 #include "peconv/fix_imports.h"
+#include "../utils/debug.h"
 
 using namespace peconv;
 
@@ -79,12 +80,12 @@ size_t peconv::read_remote_memory(HANDLE processHandle, BYTE *start_addr, OUT BY
 
 #ifdef _DEBUG
     if (read_size == 0) {
-        std::cerr << "[WARNING] Cannot read memory. Last Error : " << last_error << std::endl;
+        DEBUG_PRINT("[WARNING] Cannot read memory. Last Error : " << last_error << std::endl);
     }
     else if (read_size < buffer_size) {
-        std::cerr << "[WARNING] Read size: " << std::hex << read_size
+        DEBUG_PRINT("[WARNING] Read size: " << std::hex << read_size
             << " is smaller than the requested size: " << std::hex << buffer_size
-            << ". Last Error: " << last_error << std::endl;
+            << ". Last Error: " << last_error << std::endl);
 
     }
 #endif
@@ -220,9 +221,7 @@ size_t peconv::read_remote_pe(const HANDLE processHandle, BYTE *start_addr, cons
         return 0;
     }
     size_t sections_count = get_sections_count(hdr_buffer, MAX_HEADER_SIZE);
-#ifdef _DEBUG
-    std::cout << "Sections: " << sections_count  << std::endl;
-#endif
+    DEBUG_PRINT("Sections: " << sections_count  << std::endl);
     size_t read_size = MAX_HEADER_SIZE;
 
     for (size_t i = 0; i < sections_count; i++) {
@@ -244,9 +243,7 @@ size_t peconv::read_remote_pe(const HANDLE processHandle, BYTE *start_addr, cons
         size_t new_end = sec_va + sec_vsize;
         if (new_end > read_size) read_size = new_end;
     }
-#ifdef _DEBUG
-    std::cout << "Total read size: " << read_size << std::endl;
-#endif
+    DEBUG_PRINT("Total read size: " << read_size << std::endl);
     return read_size;
 }
 
@@ -266,9 +263,7 @@ bool peconv::dump_remote_pe(IN const char *out_path,
     IN OPTIONAL peconv::ExportsMapper* exportsMap)
 {
     DWORD mod_size = get_remote_image_size(processHandle, start_addr);
-#ifdef _DEBUG
-    std::cout << "Module Size: " << mod_size  << std::endl;
-#endif
+    DEBUG_PRINT("Module Size: " << mod_size << std::endl);
     if (mod_size == 0) {
         return false;
     }
