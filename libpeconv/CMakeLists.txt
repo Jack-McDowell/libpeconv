@@ -35,6 +35,7 @@ set (srcs
 	src/fix_dot_net_ep.cpp
 	src/find_base.cpp
 	src/peb_lookup.cpp
+	src/debug.cpp
 )
 
 set (hdrs
@@ -66,6 +67,7 @@ set (hdrs
 	include/peconv/caves.h
 	include/peconv/find_base.h
 	include/peconv/peb_lookup.h
+	include/utils/debug.h
 	src/fix_dot_net_ep.h #not in API
 )
 
