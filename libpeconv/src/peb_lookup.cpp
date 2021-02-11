@@ -67,7 +67,7 @@ inline WCHAR to_lowercase(WCHAR c1)
     return c1;
 }
 
-bool is_wanted_module(LPWSTR curr_name, LPWSTR wanted_name)
+bool is_wanted_module(LPWSTR curr_name, LPCWSTR wanted_name)
 {
     if (wanted_name == NULL || curr_name == NULL) return false;
 
@@ -94,7 +94,7 @@ bool is_wanted_module(LPWSTR curr_name, LPWSTR wanted_name)
     return true;
 }
 
-HMODULE peconv::get_module_via_peb(IN OPTIONAL LPWSTR module_name)
+HMODULE peconv::get_module_via_peb(IN OPTIONAL LPCWSTR module_name)
 {
     PPEB peb = get_peb();
     if (!peb) {
