@@ -3,8 +3,8 @@
 
 #ifdef _DEBUG
 #include <iostream>
-#include "../utils/debug.h"
 #endif
+#include "../utils/debug.h"
 
 bool parse_resource_dir(BYTE* modulePtr, const size_t moduleSize,
     IMAGE_RESOURCE_DIRECTORY_ENTRY *root_dir, 

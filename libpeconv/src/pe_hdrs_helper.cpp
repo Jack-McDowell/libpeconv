@@ -4,8 +4,8 @@ using namespace peconv;
 
 #ifdef _DEBUG
 #include <iostream>
-#include "../utils/debug.h"
 #endif
+#include "../utils/debug.h"
 
 BYTE* peconv::get_nt_hdrs(IN const BYTE *pe_buffer, IN OPTIONAL size_t buffer_size)
 {
